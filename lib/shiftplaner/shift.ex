@@ -12,7 +12,6 @@ defmodule Shiftplaner.Shift do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type Ecto.UUID
 
-
   @type t :: %__MODULE__{
                worker_needed: non_neg_integer(),
                griller_needed: non_neg_integer(),

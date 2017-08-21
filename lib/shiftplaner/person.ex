@@ -17,8 +17,7 @@ defmodule Shiftplaner.Person do
   @join_person_availability "persons_available_shifts"
   @join_person_dispositioned_shift "persons_dispositioned_shifts"
   @join_griller_dispositioned_shift "persons_dispositioned_griller_shifts"
-
-
+  
   @type t :: %__MODULE__{
                first_name: String.t,
                sure_name: String.t,
