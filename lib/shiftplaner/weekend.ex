@@ -55,7 +55,7 @@ defmodule Shiftplaner.Weekend do
     }
   end
 
-  @spec list_weekends_for_event(String.id) :: list(Shiftplaner.Weekend.t)
+  @spec list_weekends_for_event(String.t) :: list(Shiftplaner.Weekend.t)
   def list_weekends_for_event(event_id) when is_binary(event_id) do
     Weekend
     |> where([w], w.event_id   == ^event_id)

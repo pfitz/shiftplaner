@@ -102,11 +102,11 @@ defmodule Shiftplaner.Day do
     Logger.debug fn ->
       "successfully updated day - #{day.id}: #{day.date}"
     end
-    day
+    {:ok, day}
   end
 
   defp update_result({:error, reason}) do
     Logger.warn fn -> "Could not update day - #{reason}" end
-    nil
+    {:error, reason}
   end
 end
