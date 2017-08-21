@@ -64,6 +64,68 @@ defmodule Shiftplaner do
 
   ##################################################################
   ####
+  ####          Weekend functions
+  ####
+  ##################################################################
+
+  @doc """
+  Creates an ecto changeset for the given weekend.
+
+  weekend = ```Shiftplaner.Weekend```
+
+  returns ```%Ecto.Changeset{}``` for ```Shiftplaner.Weekend```
+  """
+  @spec change_weekend(Shiftplaner.Weekend.t) :: Ecto.Changeset.t
+  defdelegate change_weekend(weekend), to: Shiftplaner.Weekend
+
+  @doc """
+  Tries to create a weekend from the given ```attrs```.
+
+  Returns either ```{:ok, weekend}``` or ```{:error, changeset}```
+  """
+  @spec create_weekend(map) :: {:ok, Shiftplaner.Weekend.t} | {:error, Ecto.Changeset.t}
+  defdelegate create_weekend(attrs), to: Shiftplaner.Weekend
+
+  @doc """
+  It returns {:ok, weekend} if the struct has been successfully deleted or {:error, changeset}
+  if there was a validation or a known constraint error.
+  """
+  @spec delete_weekend(Shiftplaner.Weekend.t) :: {:ok, Shiftplaner.Weekend.t} | {
+    :error,
+    Ecto.Changeset.t
+  }
+  defdelegate delete_weekend(weekend), to: Shiftplaner.Weekend
+
+  @doc """
+  Tries to get the weekend for the given binary uuid.
+
+  Returns either a weekend or raises ```Ecto.NoResultsError``` if no record was found..
+  """
+  @spec get_weekend!(String.t) :: Shiftplaner.Weekend.t | no_return
+  defdelegate get_weekend!(id), to: Shiftplaner.Weekend
+
+  @doc """
+  List all weekends for the given event.
+
+  Returns a list of weekends.
+  """
+  @spec list_weekends_for_event(String.t) :: list(Shiftplaner.Weekend.t)
+  defdelegate list_weekends_for_event(event_id), to: Shiftplaner.Weekend
+
+  @doc """
+  Updates the given ```Weekend```.
+
+  If successful returns ```{:ok, updated_weekend}```.
+  If unsuccesful returns ```{:error, changeset}```.
+  """
+  @spec update_weekend(Shiftplaner.Weekend.t, map) :: {:ok, Shiftplaner.Weekend} | {
+    :error,
+    Ecto.Changeset.t
+  }
+  defdelegate update_weekend(weekend, attrs), to: Shiftplaner.Weekend
+
+  ##################################################################
+  ####
   ####          Person functions
   ####
   ##################################################################
