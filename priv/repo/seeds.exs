@@ -1,12 +1,12 @@
 alias Shiftplaner.{Day, Event, Person, Shift, Weekend}
 
-event = Event.create_event(%{name: "Test Event", active: true})
+{:ok, event} = Event.create_event(%{name: "Test Event", active: true})
 
 d1 = Day.create_day(%{date: ~D[2018-08-20]})
 d2 = Day.create_day(%{date: ~D[2018-08-21]})
 d3 = Day.create_day(%{date: ~D[2018-08-22]})
 
-week = Weekend.create_weekend_with_days([d1, d2, d3])
+{:ok, week} = Weekend.create_weekend_with_days([d1, d2, d3])
 
 _event = Event.add_weekend_to_event(event, week)
 

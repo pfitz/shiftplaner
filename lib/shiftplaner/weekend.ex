@@ -1,17 +1,16 @@
 defmodule Shiftplaner.Weekend do
   @moduledoc false
-
-  use Ecto.Schema
-
   alias Shiftplaner.{Day, Repo, Weekend}
-
   import Ecto.{Query, Changeset}, warn: false
+  require Logger
+  use Ecto.Schema
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type Ecto.UUID
 
   @type t :: %__MODULE__{event: Shiftplaner.Event.t, days: list(Shiftplaner.Day.t)}
   schema "weekend" do
+    field :name
     belongs_to :event, Shiftplaner.Event
     has_many :days, Shiftplaner.Day
 
@@ -36,6 +35,10 @@ defmodule Shiftplaner.Weekend do
     weekend_changeset(weekend, %{})
   end
 
+  def changeset(%Weekend{} = weekend, params) do
+    weekend_changeset(weekend, params)
+  end
+
   @doc """
   Tries to create a weekend from the given ```attrs```.
 
@@ -49,11 +52,25 @@ defmodule Shiftplaner.Weekend do
     |> insert_result()
   end
 
+  @doc """
+  Tries to add a weekend from the given ```attrs``` to an existing ```event```.
+
+  Returns either ```{:ok, event}``` or ```{:error, :could_not_add_weekend_to_event}```
+  """
+  @spec create_weekend_for_event(map, String.t) :: {:ok, Shiftplaner.Weekend.t} | {
+    :error,
+    :could_not_add_weekend_to_event
+  }
+  def create_weekend_for_event(attrs, event_id) when is_binary(event_id) do
+    attrs = Map.put(attrs, "event_id", event_id)
+    create_weekend(attrs)
+  end
+
   @spec create_weekend_with_days(
           list(
             Shiftplaner.Day.t
           )
-        ) :: Shiftplaner.Weekend.t | nil
+        ) :: {:ok, Shiftplaner.Weekend.t} | {:error, Ecto.Changeset.t}
   def create_weekend_with_days([%Day{} = d1, %Day{} = d2, %Day{} = d3]) do
     %Weekend{}
     |> weekend_changeset(%{})
@@ -77,15 +94,18 @@ defmodule Shiftplaner.Weekend do
 
   @spec first_and_last_day_of_weekend(Shiftplaner.Weekend.t) :: {Date.t, Date.t}
   def first_and_last_day_of_weekend(%Weekend{} = weekend) do
-    days = list_all_days_for_weekend(weekend)
-    {
-      days
-      |> List.first()
-      |> Map.get(:date),
-      days
-      |> List.last()
-      |> Map.get(:date)
-    }
+    case days = list_all_days_for_weekend(weekend) do
+      [] -> {:no_days, :no_days}
+      _ ->
+        {
+          days
+          |> List.first()
+          |> Map.get(:date),
+          days
+          |> List.last()
+          |> Map.get(:date)
+        }
+    end
   end
 
   @doc """
@@ -120,10 +140,11 @@ defmodule Shiftplaner.Weekend do
     Weekend
     |> where([w], w.id == ^id)
     |> Repo.one
+    |> Repo.preload(:days)
   end
 
   @doc """
-  Updates the given ```Weekend```.
+    Updates the given ```Weekend```.
 
   If successful returns ```{:ok, updated_weekend}```.
   If unsuccesful returns ```{:error, changeset}```.
@@ -145,18 +166,19 @@ defmodule Shiftplaner.Weekend do
   ##################################################################
 
   defp insert_result({:ok, %Weekend{} = weekend}) do
-    weekend
+    fn -> Logger.debug "successfully inserted weekend"  end
+    {:ok, weekend}
   end
 
   defp insert_result({:error, reason}) do
-    IO.puts "Error #{reason}"
-    nil
+    fn -> Logger.warn "could not insert weekend!" end
+    {:error, reason}
   end
 
   defp weekend_changeset(%Weekend{} = weekend, attrs) do
     weekend
     |> Repo.preload(:days)
-    |> cast(attrs, [])
+    |> cast(attrs, [:name, :event_id])
     |> cast_assoc(:days, with: :change_day)
   end
 end

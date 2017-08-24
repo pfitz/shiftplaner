@@ -23,6 +23,8 @@ defmodule Shiftplaner.Event do
     timestamps()
   end
 
+  @spec add_weekend_to_event(Shiftplaner.Event.t, Shiftplaner.Weekend.t)
+        :: {:ok, Shiftplaner.Event.t} | {:error, Ecto.Changeset.t}
   def add_weekend_to_event(%Event{} = event, list_of_events) when is_list(list_of_events) do
     Enum.each(list_of_events, &add_weekend_to_event(event, &1))
   end
@@ -33,6 +35,14 @@ defmodule Shiftplaner.Event do
     |> put_assoc(:weekends, [weekend])
     |> Repo.update()
     |> update_result()
+  end
+
+  def add_weekend_to_event(%Event{} = event, attrs) when is_map(attrs) do
+    event
+    |> event_changeset(attrs)
+    |> Repo.update()
+    |> update_result()
+
   end
 
   @doc """
@@ -129,11 +139,24 @@ defmodule Shiftplaner.Event do
 
   Returns either an Event or nil or nothing.
   """
-  @spec get_event(String.t) :: Shiftplaner.Event.t | nil | no_return
+  @spec get_event(String.t) :: {:ok, Shiftplaner.Event.t} | {:error, :could_not_fetch_event}
   def get_event(id) when is_binary(id) do
     Event
     |> where([e], e.id == ^id)
     |> Repo.one
+    |> Repo.preload(:weekends)
+    |> result_to_tuple()
+  end
+
+  @doc """
+  Similiar to ```get_event/1``` but raises if no records is found.
+  """
+  @spec get_event!(String.t) :: Shiftplaner.Event.t | no_return
+  def get_event!(id) when is_binary(id) do
+    case get_event(id) do
+      {:ok, event} -> event
+      {:error, _} -> raise RuntimeError, message: "Could not fetch event :("
+    end
   end
 
   @doc """
@@ -157,6 +180,7 @@ defmodule Shiftplaner.Event do
     event
     |> Repo.preload(@preloads)
     |> cast(attrs, [:name, :active])
+    |> cast_assoc(:weekends)
     |> validate_required([:name])
   end
 
@@ -170,6 +194,14 @@ defmodule Shiftplaner.Event do
   defp insert_result({:error, reason}) do
     Logger.warn fn -> "Could not insert event - #{reason}" end
     {:error, reason}
+  end
+
+  defp result_to_tuple(%Event{} = event) do
+    {:ok, event}
+  end
+
+  defp result_to_tuple(_) do
+    {:error, :could_not_fetch_event}
   end
 
   defp update_result({:ok, %Event{} = event}) do

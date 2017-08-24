@@ -13,6 +13,7 @@ defmodule Shiftplaner.Repo.Migrations.CreateInitialSchemas do
 
     create table(:weekend, primary_key: false) do
       add :id, :uuid, primary_key: true
+      add :name, :string
       add :event_id, references(:event, type: :uuid)
 
       timestamps()

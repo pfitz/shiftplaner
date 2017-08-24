@@ -39,8 +39,14 @@ defmodule Shiftplaner do
 
   Returns either an Event or nil or nothing.
   """
-  @spec get_event(String.t) :: Shiftplaner.Event.t | nil | no_return
+  @spec get_event(String.t) :: Shiftplaner.Event.t | {:error, :could_not_fetch_event}
   defdelegate get_event(id), to: Shiftplaner.Event
+
+  @doc """
+  Similiar to ```get_event/1``` but raises if no records is found.
+  """
+  @spec get_event!(String.t) :: Shiftplaner.Event.t | no_return
+  defdelegate get_event!(id), to: Shiftplaner.Event
 
   @doc """
   Lists all active and inactive events and preloads the weekends.
@@ -85,6 +91,17 @@ defmodule Shiftplaner do
   """
   @spec create_weekend(map) :: {:ok, Shiftplaner.Weekend.t} | {:error, Ecto.Changeset.t}
   defdelegate create_weekend(attrs), to: Shiftplaner.Weekend
+
+  @doc """
+  Tries to add a weekend from the given ```attrs``` to an existing ```event```.
+
+  Returns either ```{:ok, event}``` or ```{:error, :could_not_add_weekend_to_event}```
+  """
+  @spec create_weekend_for_event(map, String.t) :: {:ok, Shiftplaner.Weekend.t} | {
+    :error,
+    :could_not_add_weekend_to_event
+  }
+  defdelegate create_weekend_for_event(attrs, event_id), to: Shiftplaner.Weekend
 
   @doc """
   It returns {:ok, weekend} if the struct has been successfully deleted or {:error, changeset}
