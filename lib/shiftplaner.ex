@@ -143,6 +143,36 @@ defmodule Shiftplaner do
 
   ##################################################################
   ####
+  ####          Day functions
+  ####
+  ##################################################################
+
+  @spec change_day(Shiftplaner.Day.t) :: Ecto.Changeset.t
+  defdelegate change_day(day), to: Shiftplaner.Day
+
+  @spec create_day(map) :: {:ok, Shiftplaner.Day.t} | {:error, Ecto.Changeset.t}
+  defdelegate create_day(attrs), to: Shiftplaner.Day
+
+  @spec delete_day(Shiftplaner.Day.t) :: {:ok, Shiftplaner.Day.t} | {:error, Ecto.Changeset.t}
+  defdelegate delete_day(day), to: Shiftplaner.Day
+
+  @spec get_day(String.t) :: {:ok, Shiftplaner.Day.t} | {:error, Ecto.Changeset.t}
+  defdelegate get_day(id), to: Shiftplaner.Day
+
+  @spec get_day!(String.t) :: Shiftplaner.Day.t | no_return
+  defdelegate get_day!(id), to: Shiftplaner.Day
+
+  @spec list_days :: list(Shiftplaner.Day.t)
+  defdelegate list_days(), to: Shiftplaner.Day
+
+  @spec update_day(Shiftplaner.Day.t, map) :: {:ok, Shiftplaner.Day} | {
+    :error,
+    Ecto.Changeset.t
+  }
+  defdelegate update_day(day, attrs), to: Shiftplaner.Day
+
+  ##################################################################
+  ####
   ####          Person functions
   ####
   ##################################################################
