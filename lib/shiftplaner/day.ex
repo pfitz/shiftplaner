@@ -96,6 +96,14 @@ defmodule Shiftplaner.Day do
     |> Repo.all
   end
 
+  @spec list_days_for_weekend(String.t) :: list(Shiftplaner.Day.t)
+  def list_days_for_weekend(weekend_id) when is_binary(weekend_id) do
+    Day
+    |> where([d], d.weekend_id == ^weekend_id)
+    |> Repo.all()
+    |> Repo.preload(:shifts)
+  end
+
   @spec update_day(Shiftplaner.Day.t, map) :: {:ok, Shiftplaner.Day} | {
     :error,
     Ecto.Changeset.t

@@ -165,6 +165,9 @@ defmodule Shiftplaner do
   @spec list_days :: list(Shiftplaner.Day.t)
   defdelegate list_days(), to: Shiftplaner.Day
 
+  @spec list_days_for_weekend(String.t) :: list(Shiftplaner.Day.t)
+  defdelegate list_days_for_weekend(weekend_id), to: Shiftplaner.Day
+
   @spec update_day(Shiftplaner.Day.t, map) :: {:ok, Shiftplaner.Day} | {
     :error,
     Ecto.Changeset.t
