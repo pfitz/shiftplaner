@@ -17,7 +17,7 @@ defmodule Shiftplaner.Person do
   @join_person_availability "persons_available_shifts"
   @join_person_dispositioned_shift "persons_dispositioned_shifts"
   @join_griller_dispositioned_shift "persons_dispositioned_griller_shifts"
-  
+
   @type t :: %__MODULE__{
                first_name: String.t,
                sure_name: String.t,
@@ -108,12 +108,11 @@ defmodule Shiftplaner.Person do
     person_changeset(person, %{})
   end
 
-  @spec create_person(map) :: Shiftplaner.Person.t | nil
+  @spec create_person(map) :: {:ok, Shiftplaner.Person.t} | {:error, Ecto.Changeset.t}
   def create_person(attrs) do
     %Person{}
     |> person_changeset(attrs)
     |> Repo.insert()
-    |> insert_result()
   end
 
   @spec delete_availability_for_worker_and_shift(
@@ -143,12 +142,29 @@ defmodule Shiftplaner.Person do
     Repo.delete_all(query)
   end
 
-  @spec get_person(String.t) :: Shiftplaner.Person.t | nil
+  @spec delete_person(Shiftplaner.Person.t) :: {:ok, Shiftplaner.Person.t} | {
+    :error,
+    Ecto.Changeset.t
+  }
+  def delete_person(%Person{} = person) do
+    person
+    |> Repo.delete()
+  end
+
+  @spec get_person(String.t) :: {:ok, Shiftplaner.Person.t} | {:error, :could_not_fetch_person}
   def get_person(person_id) when is_binary(person_id) do
     Person
     |> where([p], p.id == ^person_id)
     |> Repo.one()
-    |> one_person_result()
+    |> result_to_tuple()
+  end
+
+  @spec get_person!(String.t) :: Shiftplaner.Person.t | no_return
+  def get_person!(person_id) when is_binary(person_id) do
+    case get_person(person_id) do
+      {:ok, person} -> person
+      _ -> raise RuntimeError, message: "Could not fetch person for id: #{person_id}"
+    end
   end
 
   @doc """
@@ -159,6 +175,7 @@ defmodule Shiftplaner.Person do
   @spec list_persons :: list(Shiftplaner.Person.t)
   def list_persons do
     Person
+    |> order_by([p], [:is_griller, :sure_name])
     |> Repo.all()
     |> Repo.preload(@preloads)
   end
@@ -175,6 +192,16 @@ defmodule Shiftplaner.Person do
     length(person.available_shifts)
   end
 
+  @spec update_person(Shiftplaner.Person.t, map) :: {:ok, Shiftplaner.Person.t} | {
+    :error,
+    Ecto.Changeset.t
+  }
+  def update_person(%Person{} = person, attrs) when is_map(attrs)do
+    person
+    |> person_changeset(attrs)
+    |> Repo.update()
+  end
+
   ##################################################################
   ####
   ####          Private functions
@@ -188,30 +215,6 @@ defmodule Shiftplaner.Person do
     |> validate_required([:first_name, :sure_name])
   end
 
-  defp one_person_result({:ok, person}) do
-    Logger.debug fn ->
-      "successfully found person for id - #{person.id}: #{person.first_name} #{person.sure_name}"
-    end
-    person
-  end
-
-  defp one_person_result({:error, reason}) do
-    Logger.warn fn -> "Could not find person for id: #{reason}" end
-    nil
-  end
-
-  defp insert_result({:ok, %Person{} = person}) do
-    Logger.debug fn ->
-      "successfully inserted person - #{person.id}: #{person.first_name} #{person.sure_name}"
-    end
-    person
-  end
-
-  defp insert_result({:error, reason}) do
-    Logger.warn fn -> "Could not insert person - #{reason}" end
-    nil
-  end
-
   defp update_result({:ok, %Person{} = person}) do
     Logger.debug fn ->
       "successfully updated person - #{person.id}: #{person.first_name} #{person.sure_name}"
@@ -222,6 +225,14 @@ defmodule Shiftplaner.Person do
   defp update_result({:error, reason}) do
     Logger.warn fn -> "Could not update person - #{reason}" end
     nil
+  end
+
+  defp result_to_tuple(%Person{} = person) do
+    {:ok, person}
+  end
+
+  defp result_to_tuple(_) do
+    {:error, :could_not_fetch_person}
   end
 
 end

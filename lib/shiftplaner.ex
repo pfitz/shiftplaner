@@ -213,6 +213,24 @@ defmodule Shiftplaner do
   ####
   ##################################################################
 
+  @spec change_person(Shiftplaner.Person.t) :: Ecto.Changeset.t
+  defdelegate change_person(person), to: Shiftplaner.Person
+
+  @spec create_person(map) :: {:ok, Shiftplaner.Person.t} | {:error, Ecto.Changeset.t}
+  defdelegate create_person(attrs), to: Shiftplaner.Person
+
+  @spec delete_person(Shiftplaner.Person.t) :: {:ok, Shiftplaner.Person.t} | {
+    :error,
+    Ecto.Changeset.t
+  }
+  defdelegate delete_person(person), to: Shiftplaner.Person
+
+  @spec get_person(String.t) :: {:ok, Shiftplaner.Person.t} | {:error, :could_not_fetch_person}
+  defdelegate get_person(person_id), to: Shiftplaner.Person
+
+  @spec get_person!(String.t) :: Shiftplaner.Person.t | no_return
+  defdelegate get_person!(person_id), to: Shiftplaner.Person
+
   @doc """
   List all persons
 
@@ -220,4 +238,16 @@ defmodule Shiftplaner do
   """
   @spec list_persons :: list(Shiftplaner.Person.t)
   defdelegate list_persons, to: Shiftplaner.Person
+
+  @spec remaining_number_of_available_shifts_for_person(Shiftplaner.Person.t) :: non_neg_integer()
+  defdelegate remaining_number_of_available_shifts_for_person(person), to: Shiftplaner.Person, as: :remaining_number_of_available_shifts
+
+  @spec total_number_of_available_shifts_for_person(Shiftplaner.Person.t) :: non_neg_integer()
+  defdelegate total_number_of_available_shifts_for_person(person), to: Shiftplaner.Person, as: :total_number_of_available_shifts
+
+  @spec update_person(Shiftplaner.Person.t, map) :: {:ok, Shiftplaner.Person.t} | {
+    :error,
+    Ecto.Changeset.t
+  }
+  defdelegate update_person(person, attrs), to: Shiftplaner.Person
 end

@@ -213,16 +213,6 @@ defmodule Shiftplaner.Shift do
     |> validate_required([:worker_needed, :griller_needed, :start_time, :end_time, :day_id])
   end
 
-  defp insert_result({:ok, %Shift{} = shift}) do
-    Logger.debug fn -> "successfully inserted shift - #{shift}" end
-    shift
-  end
-
-  defp insert_result({:error, reason}) do
-    Logger.warn fn -> "Could not insert Shift - #{reason}" end
-    nil
-  end
-
   defp repo_one_nil_to_empty_shift(result) when is_nil(result) do
     %Shift{}
   end
