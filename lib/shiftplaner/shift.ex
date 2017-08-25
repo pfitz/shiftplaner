@@ -11,6 +11,7 @@ defmodule Shiftplaner.Shift do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type Ecto.UUID
+  @preloads [:day, :available_persons, :dispositioned_persons, :dispositioned_griller]
 
   @type t :: %__MODULE__{
                worker_needed: non_neg_integer(),
@@ -54,12 +55,17 @@ defmodule Shiftplaner.Shift do
     shift_changeset(shift, %{})
   end
 
-  @spec create_shift(map) :: Shiftplaner.Shift.t | nil
+  @spec create_shift(map) :: {:ok, Shiftplaner.Shift.t} | {:error, Ecto.Changeset.t}
   def create_shift(attrs) do
     %Shift{}
     |> shift_changeset(attrs)
     |> Repo.insert()
-    |> insert_result()
+  end
+
+  @spec delete_shift(Shiftplaner.Shift.t) :: {:ok, Shiftplaner.Shift.t} | {:error, Ecto.Changeset.t}
+  def delete_shift(%Shift{} = shift)  do
+    shift
+    |> Repo.delete()
   end
 
   @spec disposition_worker_to_shift(
@@ -82,6 +88,23 @@ defmodule Shiftplaner.Shift do
     |> shift_changeset(%{})
     |> put_assoc(:dispositioned_griller, [griller])
     |> Repo.update!()
+  end
+
+  @spec get_shift(String.t) :: {:ok, Shiftplaner.Shift.t} | {:error, :could_not_fetch_shift}
+  def get_shift(id) when is_binary(id) do
+    Shift
+    |> where([s], s.id == ^id)
+    |> Repo.one
+    |> Repo.preload(@preloads)
+    |> result_to_tuple()
+  end
+
+  @spec get_shift!(String.t) :: Shiftplaner.Shift.t | no_return
+  def get_shift!(id) when is_binary(id) do
+    case get_shift(id) do
+      {:ok, %Shift{} = shift} -> shift
+      _ -> raise RuntimeError, message: "Could not fetch shift with id: #{id}"
+    end
   end
 
   @spec list_available_worker_for_shift(Shiftplaner.Shift.t) :: list(Shiftplaner.Person.t)
@@ -125,8 +148,16 @@ defmodule Shiftplaner.Shift do
   @spec list_shifts :: list(Shiftplaner.Shift.t)
   def list_shifts do
     Shift
-    |> Repo.all
+    |> Repo.all()
     |> Repo.preload(:day)
+  end
+
+  @spec list_shifts_for_day(String.t) :: list(Shiftplaner.Shift.t)
+  def list_shifts_for_day(day_id) when is_binary(day_id) do
+    Shift
+    |> where([s], s.day_id == ^day_id)
+    |> Repo.all()
+    |> Repo.preload(@preloads)
   end
 
   @spec needs_worker?(Shiftplaner.Shift.t) :: boolean
@@ -159,6 +190,16 @@ defmodule Shiftplaner.Shift do
     number_of_workers_needed(shift) + number_of_grillers_needed(shift)
   end
 
+  @spec update_shift(Shiftplaner.Shift.t, map) :: {:ok, Shiftplaner.Shift.t} | {
+    :error,
+    Ecto.Changeset.t
+  }
+  def update_shift(%Shift{} = shift, attrs) when is_map(attrs) do
+    shift
+    |> shift_changeset(attrs)
+    |> Repo.update()
+  end
+
   ##################################################################
   ####
   ####          Private functions
@@ -168,8 +209,8 @@ defmodule Shiftplaner.Shift do
   defp shift_changeset(%Shift{} = shift, attrs) do
     shift
     |> Repo.preload([:available_persons, :dispositioned_persons])
-    |> cast(attrs, [:worker_needed, :griller_needed, :start_time, :end_time])
-    |> validate_required([:worker_needed, :griller_needed, :start_time, :end_time])
+    |> cast(attrs, [:worker_needed, :griller_needed, :start_time, :end_time, :day_id])
+    |> validate_required([:worker_needed, :griller_needed, :start_time, :end_time, :day_id])
   end
 
   defp insert_result({:ok, %Shift{} = shift}) do
@@ -188,6 +229,14 @@ defmodule Shiftplaner.Shift do
 
   defp repo_one_nil_to_empty_shift(%Shift{} = shift) do
     shift
+  end
+
+  defp result_to_tuple(%Shift{} = shift) do
+    {:ok, shift}
+  end
+
+  defp result_to_tuple(_) do
+    {:error, :could_not_fetch_shift}
   end
 
   ##################################################################

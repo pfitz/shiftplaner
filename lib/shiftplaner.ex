@@ -173,6 +173,39 @@ defmodule Shiftplaner do
 
   ##################################################################
   ####
+  ####          Shift functions
+  ####
+  ##################################################################
+
+  @spec change_shift(Shiftplaner.Shift.t) :: Ecto.Changeset.t
+  defdelegate change_shift(shift), to: Shiftplaner.Shift
+
+  @spec create_shift(map) :: {:ok, Shiftplaner.Shift.t} | {:error, Ecto.Changeset.t}
+  defdelegate create_shift(attrs), to: Shiftplaner.Shift
+
+  @spec delete_shift(Shiftplaner.Shift.t) :: {:ok, Shiftplaner.Shift.t} | {:error, Ecto.Changeset.t}
+  defdelegate delete_shift(shift), to: Shiftplaner.Shift
+
+  @spec get_shift(String.t) :: {:ok, Shiftplaner.Shift.t} | {:error, :could_not_fetch_shift}
+  defdelegate get_shift(id), to: Shiftplaner.Shift
+
+  @spec get_shift!(String.t) :: Shiftplaner.Shift.t | no_return
+  defdelegate get_shift!(id), to: Shiftplaner.Shift
+
+  @spec list_shifts :: list(Shiftplaner.Shift.t)
+  defdelegate list_shifts, to: Shiftplaner.Shift
+
+  @spec list_shifts_for_day(String.t) :: list(Shiftplaner.Shift.t)
+  defdelegate list_shifts_for_day(day_id), to: Shiftplaner.Shift
+
+  @spec update_shift(Shiftplaner.Shift.t, map) :: {:ok, Shiftplaner.Shift.t} | {
+    :error,
+    Ecto.Changeset.t
+  }
+  defdelegate update_shift(shift, attrs), to: Shiftplaner.Shift
+
+  ##################################################################
+  ####
   ####          Person functions
   ####
   ##################################################################
