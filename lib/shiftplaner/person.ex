@@ -4,6 +4,7 @@ defmodule Shiftplaner.Person do
   """
 
   alias Shiftplaner.{Person, Repo, Shift}
+  alias Ecto.UUID
 
   import Ecto.{Query, Changeset}, warn: false
 
@@ -12,7 +13,7 @@ defmodule Shiftplaner.Person do
   use Ecto.Schema
 
   @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type Ecto.UUID
+  @foreign_key_type UUID
   @preloads [:available_shifts, :dispositioned_shifts, :dispositioned_griller_shifts]
   @join_person_availability "persons_available_shifts"
   @join_person_dispositioned_shift "persons_dispositioned_shifts"
@@ -180,6 +181,23 @@ defmodule Shiftplaner.Person do
     |> Repo.preload(@preloads)
   end
 
+  @spec list_available_shifts_for_person(String.t) :: list(String.t)
+  def list_available_shifts_for_person(person_id) do
+    {:ok, p_id_bin} = UUID.dump(person_id)
+    query = from a in @join_person_availability,
+                 where: a.person_id == ^p_id_bin,
+                 select: a.shift_id
+
+    query
+    |> Repo.all()
+    |> Enum.map(
+         fn (bin_id) ->
+           {:ok, id} = UUID.load(bin_id)
+           id
+         end
+       )
+  end
+
   @spec remaining_number_of_available_shifts(Shiftplaner.Person.t) :: non_neg_integer()
   def remaining_number_of_available_shifts(%Person{} = person) do
     total_number_of_available_shifts(person) - length(person.dispositioned_shifts) - length(
@@ -200,6 +218,22 @@ defmodule Shiftplaner.Person do
     person
     |> person_changeset(attrs)
     |> Repo.update()
+  end
+
+  @spec update_persons_availability_for_shifts(String.t, list(String.t)) :: {:ok}
+  def update_persons_availability_for_shifts(person_id, lisf_of_selected_shift_ids)
+      when is_binary(person_id) and is_list(lisf_of_selected_shift_ids) do
+    selected_shift_ids = lisf_of_selected_shift_ids
+                         |> MapSet.new()
+    prev_selected_shifts =
+      person_id
+      |> list_available_shifts_for_person()
+      |> MapSet.new()
+
+    delete_not_available_shifts(person_id, selected_shift_ids, prev_selected_shifts)
+    insert_new_available_shifts(person_id, selected_shift_ids, prev_selected_shifts)
+
+    {:ok}
   end
 
   ##################################################################
@@ -235,4 +269,57 @@ defmodule Shiftplaner.Person do
     {:error, :could_not_fetch_person}
   end
 
+  @spec insert_new_available_shifts(String.t, MapSet.t, MapSet.t) :: {integer, nil | [term]}
+  defp insert_new_available_shifts(
+         person_id,
+         selected_shift_ids,
+         prev_selected_shifts
+       )  do
+    list_of_inserts =
+      selected_shift_ids
+      |> MapSet.difference(prev_selected_shifts)
+      |> MapSet.to_list()
+      |> map_list_to_insert_map(person_id)
+
+    Repo.insert_all(@join_person_availability, list_of_inserts)
+  end
+
+  defp map_list_to_insert_map(list_of_shifts, person_id) when is_list(list_of_shifts) do
+    list_of_shifts
+    |> Enum.map(
+         fn (shift_id) ->
+           {:ok, s_id_bin} = UUID.dump(shift_id)
+           {:ok, p_id_bin} = UUID.dump(person_id)
+           %{"shift_id" => s_id_bin, "person_id" => p_id_bin}
+         end
+       )
+  end
+
+  @spec delete_not_available_shifts(String.t, MapSet.t, MapSet.t) :: {integer, nil | [term]}
+  defp delete_not_available_shifts(
+         person_id,
+         selected_shift_ids,
+         prev_selected_shifts
+       ) do
+    list_of_shifts_to_remove =
+      prev_selected_shifts
+      |> MapSet.difference(selected_shift_ids)
+      |> MapSet.to_list()
+      |> map_list_to_bin_uuid_list()
+
+    {:ok, p_bin_id} = UUID.dump(person_id)
+    delete_query = from a in @join_person_availability,
+                        where: a.person_id == ^p_bin_id and a.shift_id in ^list_of_shifts_to_remove
+    Repo.delete_all(delete_query)
+  end
+
+  defp map_list_to_bin_uuid_list(list_of_shift_ids) when is_list(list_of_shift_ids) do
+    list_of_shift_ids
+    |> Enum.map(
+         fn shift_id ->
+           {:ok, id} = UUID.dump(shift_id)
+           id
+         end
+       )
+  end
 end

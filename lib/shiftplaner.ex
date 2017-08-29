@@ -240,14 +240,20 @@ defmodule Shiftplaner do
   defdelegate list_persons, to: Shiftplaner.Person
 
   @spec remaining_number_of_available_shifts_for_person(Shiftplaner.Person.t) :: non_neg_integer()
-  defdelegate remaining_number_of_available_shifts_for_person(person), to: Shiftplaner.Person, as: :remaining_number_of_available_shifts
+  defdelegate remaining_number_of_available_shifts_for_person(person),
+              to: Shiftplaner.Person, as: :remaining_number_of_available_shifts
 
   @spec total_number_of_available_shifts_for_person(Shiftplaner.Person.t) :: non_neg_integer()
-  defdelegate total_number_of_available_shifts_for_person(person), to: Shiftplaner.Person, as: :total_number_of_available_shifts
+  defdelegate total_number_of_available_shifts_for_person(person),
+              to: Shiftplaner.Person, as: :total_number_of_available_shifts
 
   @spec update_person(Shiftplaner.Person.t, map) :: {:ok, Shiftplaner.Person.t} | {
     :error,
     Ecto.Changeset.t
   }
   defdelegate update_person(person, attrs), to: Shiftplaner.Person
+
+  @spec update_persons_availability_for_shifts(String.t, list(String.t)) :: {:ok}
+  defdelegate update_persons_availability_for_shifts(person_id, lisf_of_selected_shift_ids),
+              to: Shiftplaner.Person
 end
