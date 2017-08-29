@@ -181,8 +181,8 @@ defmodule Shiftplaner.Person do
     |> Repo.preload(@preloads)
   end
 
-  @spec list_available_shifts_for_person(String.t) :: list(String.t)
-  def list_available_shifts_for_person(person_id) do
+  @spec list_available_shift_ids_for_person_id(String.t) :: list(String.t)
+  def list_available_shift_ids_for_person_id(person_id) do
     {:ok, p_id_bin} = UUID.dump(person_id)
     query = from a in @join_person_availability,
                  where: a.person_id == ^p_id_bin,
@@ -196,6 +196,12 @@ defmodule Shiftplaner.Person do
            id
          end
        )
+  end
+
+  def list_available_shifts_for_person(%Person{} = person) do
+    person.id
+    |> list_available_shift_ids_for_person_id()
+    |> Enum.map(fn shift_id -> Shiftplaner.get_shift!(shift_id)  end)
   end
 
   @spec remaining_number_of_available_shifts(Shiftplaner.Person.t) :: non_neg_integer()
@@ -227,7 +233,7 @@ defmodule Shiftplaner.Person do
                          |> MapSet.new()
     prev_selected_shifts =
       person_id
-      |> list_available_shifts_for_person()
+      |> list_available_shift_ids_for_person_id
       |> MapSet.new()
 
     delete_not_available_shifts(person_id, selected_shift_ids, prev_selected_shifts)

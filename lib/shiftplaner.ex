@@ -231,6 +231,8 @@ defmodule Shiftplaner do
   @spec get_person!(String.t) :: Shiftplaner.Person.t | no_return
   defdelegate get_person!(person_id), to: Shiftplaner.Person
 
+  defdelegate list_available_shifts_for_person(person_id), to: Shiftplaner.Person
+
   @doc """
   List all persons
 
