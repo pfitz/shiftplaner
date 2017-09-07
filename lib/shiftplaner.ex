@@ -189,6 +189,12 @@ defmodule Shiftplaner do
   @spec delete_shift(Shiftplaner.Shift.t) :: {:ok, Shiftplaner.Shift.t} | {:error, Ecto.Changeset.t}
   defdelegate delete_shift(shift), to: Shiftplaner.Shift
 
+  @spec disposition_workers_to_shift(String.t, list(String.t)) :: {integer, nil | [term]}
+  defdelegate disposition_workers_to_shift(shift_id, list_of_workers), to: Shiftplaner.Shift
+
+  @spec disposition_grillers_to_shift(String.t, list(String.t)) :: {integer, nil | [term]}
+  defdelegate disposition_grillers_to_shift(shift_id, list_of_griller), to: Shiftplaner.Shift
+
   @spec get_shift(String.t) :: {:ok, Shiftplaner.Shift.t} | {:error, :could_not_fetch_shift}
   defdelegate get_shift(id), to: Shiftplaner.Shift
 

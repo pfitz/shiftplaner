@@ -2,6 +2,7 @@ defmodule Shiftplaner.Shift do
   @moduledoc false
 
   alias Shiftplaner.{Person, Repo, Shift}
+  alias Ecto.UUID
 
   import Ecto.{Query, Changeset}, warn: false
 
@@ -10,8 +11,10 @@ defmodule Shiftplaner.Shift do
   require Logger
 
   @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type Ecto.UUID
+  @foreign_key_type UUID
   @preloads [:day, :available_persons, :dispositioned_persons, :dispositioned_griller]
+  @jointable_dispositioned_worker_shifts "persons_dispositioned_shifts"
+  @jointable_dispositioned_griller_shifts "persons_dispositioned_griller_shifts"
 
   @type t :: %__MODULE__{
                worker_needed: non_neg_integer(),
@@ -36,10 +39,12 @@ defmodule Shiftplaner.Shift do
                  join_through: "persons_available_shifts", unique: true
     many_to_many :dispositioned_persons,
                  Person,
-                 join_through: "persons_dispositioned_shifts", unique: true
+                 join_through: "persons_dispositioned_shifts", on_replace: :delete, unique: true
     many_to_many :dispositioned_griller,
                  Person,
-                 join_through: "persons_dispositioned_griller_shifts", unique: true
+                 join_through: "persons_dispositioned_griller_shifts",
+                 on_replace: :delete,
+                 unique: true
 
     timestamps()
   end
@@ -70,13 +75,29 @@ defmodule Shiftplaner.Shift do
 
   @spec disposition_worker_to_shift(
           Shiftplaner.Shift.t,
-          Shiftplaner.Person.t
+          Shiftplaner.Person.t | list(Shiftplaner.Pers)
         ) :: Shiftplaner.Shift.t | no_return
   def disposition_worker_to_shift(%Shift{} = shift, %Person{} = person) do
     shift
     |> shift_changeset(%{})
     |> put_assoc(:dispositioned_persons, [person])
     |> Repo.update!()
+  end
+
+  @spec disposition_workers_to_shift(String.t, list(String.t)) :: {integer, nil | [term]}
+  def disposition_workers_to_shift(shift_id, list_of_workers)
+      when is_binary(shift_id) and is_list(list_of_workers) do
+    shift_id
+    |> delete_all_workers_from_shift()
+    |> insert_all_workers_for_shift(list_of_workers)
+  end
+
+  @spec disposition_grillers_to_shift(String.t, list(String.t)) :: {integer, nil | [term]}
+  def disposition_grillers_to_shift(shift_id, list_of_griller)
+      when is_binary(shift_id) and is_list(list_of_griller) do
+    shift_id
+    |> delete_all_grillers_from_shift()
+    |> insert_all_grillers_for_shift(list_of_griller)
   end
 
   @spec dispositon_griller_to_shift(
@@ -205,6 +226,60 @@ defmodule Shiftplaner.Shift do
   ####          Private functions
   ####
   ##################################################################
+
+  defp delete_all_grillers_from_shift(shift_id) when is_binary(shift_id) do
+    {:ok, bin_shift_id} = UUID.dump(shift_id)
+    query = from a in @jointable_dispositioned_griller_shifts,
+                 where: a.shift_id == ^bin_shift_id
+    Repo.delete_all(query)
+    shift_id
+  end
+
+  defp delete_all_workers_from_shift(shift_id) when is_binary(shift_id) do
+    {:ok, bin_shift_id} = UUID.dump(shift_id)
+    query = from a in @jointable_dispositioned_worker_shifts,
+                 where: a.shift_id == ^bin_shift_id
+    Repo.delete_all(query)
+    shift_id
+  end
+
+  defp insert_all_grillers_for_shift(shift_id, list_of_grillers)
+       when is_binary(shift_id) and is_list(list_of_grillers) do
+    list_of_inserts =
+      list_of_grillers
+      |> Enum.map(
+           fn griller_id ->
+             {:ok, w_bin_id} = UUID.dump(griller_id)
+             {:ok, s_bin_id} = UUID.dump(shift_id)
+             %{"shift_id" => s_bin_id, "person_id" => w_bin_id}
+           end
+         )
+    Repo.insert_all(
+      @jointable_dispositioned_griller_shifts,
+      list_of_inserts,
+      on_conflict: :replace_all,
+      conflict_target: [:person_id, :shift_id]
+    )
+  end
+
+  defp insert_all_workers_for_shift(shift_id, list_of_workers)
+       when is_binary(shift_id) and is_list(list_of_workers) do
+    list_of_inserts =
+      list_of_workers
+      |> Enum.map(
+           fn worker_id ->
+             {:ok, w_bin_id} = UUID.dump(worker_id)
+             {:ok, s_bin_id} = UUID.dump(shift_id)
+             %{"shift_id" => s_bin_id, "person_id" => w_bin_id}
+           end
+         )
+    Repo.insert_all(
+      @jointable_dispositioned_worker_shifts,
+      list_of_inserts,
+      on_conflict: :replace_all,
+      conflict_target: [:person_id, :shift_id]
+    )
+  end
 
   defp shift_changeset(%Shift{} = shift, attrs) do
     shift
