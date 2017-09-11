@@ -18,7 +18,7 @@ defmodule Shiftplaner.Event do
     field :name
     field :active, :boolean, default: false
 
-    has_many :weekends, Weekend
+    has_many :weekends, Weekend,  on_delete: :delete_all
 
     timestamps()
   end

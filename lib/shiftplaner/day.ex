@@ -21,7 +21,7 @@ defmodule Shiftplaner.Day do
     field :date, :date
 
     belongs_to :weekend, Weekend
-    has_many :shifts, Shift
+    has_many :shifts, Shift, on_delete: :delete_all
 
     timestamps()
   end

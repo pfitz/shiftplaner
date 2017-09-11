@@ -27,7 +27,7 @@ defmodule Shiftplaner.Shift do
                dispositioned_griller: list(Shiftplaner.Person.t)
              }
   schema "shift" do
-    field :worker_needed, :integer
+    field :worker_needed, :integer, default: 2
     field :griller_needed, :integer, default: 1
     field :start_time, :time
     field :end_time, :time
@@ -36,15 +36,19 @@ defmodule Shiftplaner.Shift do
 
     many_to_many :available_persons,
                  Person,
-                 join_through: "persons_available_shifts", unique: true
+                 join_through: "persons_available_shifts", unique: true, on_delete: :delete_all
     many_to_many :dispositioned_persons,
                  Person,
-                 join_through: "persons_dispositioned_shifts", on_replace: :delete, unique: true
+                 join_through: "persons_dispositioned_shifts",
+                 on_replace: :delete,
+                 unique: true,
+                 on_delete: :delete_all
     many_to_many :dispositioned_griller,
                  Person,
                  join_through: "persons_dispositioned_griller_shifts",
                  on_replace: :delete,
-                 unique: true
+                 unique: true,
+                 on_delete: :delete_all
 
     timestamps()
   end

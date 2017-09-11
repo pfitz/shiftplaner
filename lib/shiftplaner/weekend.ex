@@ -12,7 +12,7 @@ defmodule Shiftplaner.Weekend do
   schema "weekend" do
     field :name
     belongs_to :event, Shiftplaner.Event
-    has_many :days, Shiftplaner.Day
+    has_many :days, Shiftplaner.Day, on_delete: :delete_all
 
     timestamps()
   end
