@@ -13,12 +13,13 @@ defmodule Shiftplaner.Event do
   @foreign_key_type Ecto.UUID
   @preloads :weekends
 
+  @type id :: String.t
   @type t :: %__MODULE__{name: String.t, active: boolean, weekends: list(Shiftplaner.Weekend.t)}
   schema "event" do
     field :name
     field :active, :boolean, default: false
 
-    has_many :weekends, Weekend,  on_delete: :delete_all
+    has_many :weekends, Weekend, on_delete: :delete_all
 
     timestamps()
   end
@@ -132,6 +133,31 @@ defmodule Shiftplaner.Event do
        )
     |> Repo.all
 
+  end
+
+  @doc """
+  List all shift ids for an given event.
+
+  event: either an event_id or an ```Shiftplaner.Event```
+
+  Returns: a list of all shift ids for an given event.
+  """
+  @spec list_all_shifts_for_event(
+          Shiftplaner.Event.t | Shiftplaner.Event.id
+        )
+        :: list(Shiftplaner.Shift.id) | no_return
+  def list_all_shifts_for_event(%Event{} = event) do
+    list_all_shifts_for_event(event.id)
+  end
+
+  def list_all_shifts_for_event(event_id) when is_binary(event_id) do
+    query = from e in Event,
+                 where: e.id == ^event_id,
+                 join: w in assoc(e, :weekends),
+                 join: d in assoc(w, :days),
+                 join: s in assoc(d, :shifts),
+                 select: s.id
+    Repo.all(query)
   end
 
   @doc """

@@ -16,6 +16,7 @@ defmodule Shiftplaner.Shift do
   @jointable_dispositioned_worker_shifts "persons_dispositioned_shifts"
   @jointable_dispositioned_griller_shifts "persons_dispositioned_griller_shifts"
 
+  @type id :: String.t
   @type t :: %__MODULE__{
                worker_needed: non_neg_integer(),
                griller_needed: non_neg_integer(),

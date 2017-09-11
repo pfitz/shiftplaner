@@ -57,6 +57,19 @@ defmodule Shiftplaner do
   defdelegate list_all_events, to: Shiftplaner.Event
 
   @doc """
+  List all shift ids for an given event.
+
+  event: either an event_id or an ```Shiftplaner.Event```
+
+  Returns: a list of all shift ids for an given event.
+  """
+  @spec list_all_shifts_for_event(
+          Shiftplaner.Event.t | Shiftplaner.Event.id
+        )
+        :: list(Shiftplaner.Shift.id) | no_return
+  defdelegate list_all_shifts_for_event(event), to: Shiftplaner.Event
+
+  @doc """
   Updates the given ```Event```.
 
   If successful returns ```{:ok, updated_event}```.
