@@ -226,8 +226,8 @@ defmodule Shiftplaner.Person do
     |> Repo.update()
   end
 
-  @spec update_persons_availability_for_shifts(String.t, list(String.t)) :: {:ok}
-  def update_persons_availability_for_shifts(person_id, lisf_of_selected_shift_ids)
+  @spec update_persons_availability_for_shifts(String.t, String.t, list(String.t)) :: {:ok}
+  def update_persons_availability_for_shifts(person_id, event_id, lisf_of_selected_shift_ids)
       when is_binary(person_id) and is_list(lisf_of_selected_shift_ids) do
     selected_shift_ids = lisf_of_selected_shift_ids
                          |> MapSet.new()
@@ -236,7 +236,7 @@ defmodule Shiftplaner.Person do
       |> list_available_shift_ids_for_person_id
       |> MapSet.new()
 
-    delete_not_available_shifts(person_id, selected_shift_ids, prev_selected_shifts)
+    delete_not_available_shifts(person_id, event_id, selected_shift_ids, prev_selected_shifts)
     insert_new_available_shifts(person_id, selected_shift_ids, prev_selected_shifts)
 
     {:ok}
@@ -301,12 +301,21 @@ defmodule Shiftplaner.Person do
        )
   end
 
-  @spec delete_not_available_shifts(String.t, MapSet.t, MapSet.t) :: {integer, nil | [term]}
+  @spec delete_not_available_shifts(String.t, String.t, MapSet.t, MapSet.t) :: {
+                                                                                 integer,
+                                                                                 nil | [term]
+                                                                               }
   defp delete_not_available_shifts(
          person_id,
+         event_id,
          selected_shift_ids,
          prev_selected_shifts
        ) do
+
+    list_of_shifts_for_event = event_id
+                               |> Shiftplaner.list_all_shifts_for_event()
+                               |> map_list_to_bin_uuid_list
+
     list_of_shifts_to_remove =
       prev_selected_shifts
       |> MapSet.difference(selected_shift_ids)
@@ -315,7 +324,9 @@ defmodule Shiftplaner.Person do
 
     {:ok, p_bin_id} = UUID.dump(person_id)
     delete_query = from a in @join_person_availability,
-                        where: a.person_id == ^p_bin_id and a.shift_id in ^list_of_shifts_to_remove
+                        where: a.person_id == ^p_bin_id
+                               and a.shift_id in ^list_of_shifts_to_remove
+                        and a.shift_id in ^list_of_shifts_for_event
     Repo.delete_all(delete_query)
   end
 

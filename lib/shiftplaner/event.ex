@@ -93,6 +93,10 @@ defmodule Shiftplaner.Event do
     |> Repo.preload(:weekends)
   end
 
+  @doc """
+  Lists all active Events. Struct is fully preloded.
+  """
+  @spec list_all_active_events :: list(Shiftplaner.Event.t)
   def list_all_active_events do
     Event
     |> where([e], e.active == true)
@@ -183,6 +187,16 @@ defmodule Shiftplaner.Event do
       {:ok, event} -> event
       {:error, _} -> raise RuntimeError, message: "Could not fetch event :("
     end
+  end
+
+  def preload_all(%Event{} = event) do
+    query = from e in Event,
+                 where: e.id == ^event.id,
+                 left_join: weekends in assoc(e, :weekends),
+                 left_join: days in assoc(weekends, :days),
+                 left_join: shifts in assoc(days, :shifts),
+                 preload: [weekends: {weekends, days: {days, :shifts}}]
+    Repo.one(query)
   end
 
   @doc """

@@ -135,6 +135,12 @@ defmodule Shiftplaner do
   defdelegate get_weekend!(id), to: Shiftplaner.Weekend
 
   @doc """
+  Lists all active Events. Struct is fully preloded.
+  """
+  @spec list_all_active_events :: list(Shiftplaner.Event.t)
+  defdelegate list_all_active_events, to: Shiftplaner.Event
+
+  @doc """
   List all weekends for the given event.
 
   Returns a list of weekends.
@@ -274,7 +280,11 @@ defmodule Shiftplaner do
   }
   defdelegate update_person(person, attrs), to: Shiftplaner.Person
 
-  @spec update_persons_availability_for_shifts(String.t, list(String.t)) :: {:ok}
-  defdelegate update_persons_availability_for_shifts(person_id, lisf_of_selected_shift_ids),
+  @spec update_persons_availability_for_shifts(String.t, String.t, list(String.t)) :: {:ok}
+  defdelegate update_persons_availability_for_shifts(
+                person_id,
+                event_id,
+                lisf_of_selected_shift_ids
+              ),
               to: Shiftplaner.Person
 end
