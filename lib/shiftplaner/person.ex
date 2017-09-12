@@ -157,6 +157,7 @@ defmodule Shiftplaner.Person do
     Person
     |> where([p], p.id == ^person_id)
     |> Repo.one()
+    |> Repo.preload([:available_shifts, :dispositioned_shifts, :dispositioned_griller_shifts])
     |> result_to_tuple()
   end
 
