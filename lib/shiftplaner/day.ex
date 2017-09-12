@@ -100,6 +100,7 @@ defmodule Shiftplaner.Day do
   def list_days_for_weekend(weekend_id) when is_binary(weekend_id) do
     Day
     |> where([d], d.weekend_id == ^weekend_id)
+    |> order_by([d], d.date)
     |> Repo.all()
     |> Repo.preload(:shifts)
   end
